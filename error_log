@@ -1,6 +1,0 @@
-[13-Jun-2026 22:11:28 UTC] PHP Warning:  Undefined array key "from" in /home/directac/public_html/cotiza/email.php on line 59
-[13-Jun-2026 22:11:28 UTC] PHP Warning:  Undefined array key "fromName" in /home/directac/public_html/cotiza/email.php on line 60
-[13-Jun-2026 22:18:03 UTC] PHP Warning:  Undefined array key "from" in /home/directac/public_html/cotiza/email.php on line 59
-[13-Jun-2026 22:18:03 UTC] PHP Warning:  Undefined array key "fromName" in /home/directac/public_html/cotiza/email.php on line 60
-[13-Jun-2026 22:32:06 UTC] PHP Warning:  Undefined array key "from" in /home/directac/public_html/cotiza/email.php on line 59
-[13-Jun-2026 22:32:06 UTC] PHP Warning:  Undefined array key "fromName" in /home/directac/public_html/cotiza/email.php on line 60

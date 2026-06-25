@@ -1,10 +1,10 @@
 *.zip
 *.sql
 
-cotiza/settings.json
-cotiza/debug.txt
-cotiza/error_log
-cotiza/uploads/
+settings.json
+debug.txt
+error_log
+uploads/
 
 .env
 .env.*
