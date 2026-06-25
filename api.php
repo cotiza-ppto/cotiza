@@ -99,10 +99,12 @@ if ($resource === 'login') {
         $rows = sb_query('usuarios', '*', ['usuario' => 'eq.' . $user]);
         $userData = $rows[0] ?? null;
 
-        // Soporta tanto texto plano como bcrypt
-        $passOk = str_starts_with($userData['contrasena'] ?? '', '$2y$')
-            ? password_verify($pass, $userData['contrasena'])
-            : ($userData['contrasena'] === $pass);
+        $passOk = false;
+        if ($userData) {
+            $passOk = str_starts_with($userData['contrasena'] ?? '', '$2y$')
+                ? password_verify($pass, $userData['contrasena'])
+                : (($userData['contrasena'] ?? '') === $pass);
+        }
 
         if ($userData && $passOk) {
             $_SESSION['logged_in'] = true;
