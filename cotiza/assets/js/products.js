@@ -55,7 +55,8 @@ renderProducts() {
     productFormFields(p = {}) {
         const famOptions = cache.families.map(f => `<option value="${f.id}" ${p.codfamilia == f.id ? 'selected' : ''}>${f.name}</option>`).join('');
         const taxOpts = [0,8,16].map(t => `<option value="${t}" ${parseFloat(p.tax)==t?'selected':''}>${t}% ${t===0?'(Exento)':''}</option>`).join('');
-        const uniOpts = cache.unidades.map(u => `<option value="${u.id}" ${p.idunidad == u.id ? 'selected' : ''}>${u.name}</option>`).join('');
+        const uniOpts = `<option value="" ${p.idunidad ? '' : 'selected'} disabled>SELECCIONAR</option>` +
+            cache.unidades.map(u => `<option value="${u.id}" ${p.idunidad == u.id ? 'selected' : ''}>${u.name}</option>`).join('');
         return `
             <div class="bg-gray-50 p-4 rounded-lg border border-gray-200"><h4 class="text-sm font-bold text-gray-500 uppercase tracking-wide mb-3">Identificación</h4>
                 <div class="grid grid-cols-1 md:grid-cols-4 gap-4">

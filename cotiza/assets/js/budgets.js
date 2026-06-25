@@ -340,7 +340,7 @@ Object.assign(window.app, {
             const _items = [...b.items];
             if (_items.length === 0) {
                 pages.push([]);
-            } else if (_items.length <= MAX_LINES) {
+            } else if (_items.length <= CAP_SINGLE) {
                 pages.push(_items.splice(0, _items.length));
             } else {
                 pages.push(_items.splice(0, CAP_FIRST));
@@ -499,9 +499,6 @@ Object.assign(window.app, {
                         <span class="bg-slate-100 py-1 px-3 rounded text-slate-500 font-bold">${pageNum} / ${totalPages}</span>
                     </div>
                 </div>`;
-                if (!isLast) {
-                    pagesHtml += '<div class="html2pdf__page-break"></div>';
-                }
             });
 
             this.showModal(`<div class="bg-white flex flex-col w-full" style="height: 85vh;" id="document-container">
@@ -543,7 +540,7 @@ Object.assign(window.app, {
         html2pdf().set(opt).from(element).save();
     },
 
-    async sendEmail(budgetId, email, clientName, codigo) {
+    async sendEmail(budgetId, email, clientName, codigo, markBudgetSent = true) {
         // Get reference to printable-area (still in the DOM, visible in the view modal)
         const originalElement = document.getElementById('printable-area');
         if (!originalElement) {
@@ -690,7 +687,7 @@ Object.assign(window.app, {
                 });
                 const data = await res.json();
                 if (data.success) {
-                    await api.put('budgets', budgetId, { status: 'Enviado' });
+                    if (markBudgetSent) await api.put('budgets', budgetId, { status: 'Enviado' });
                     app.showToast(`Correo enviado exitosamente a ${to}`);
                     app.closeModal();
                     cache.budgets = await api.get('budgets');
@@ -732,7 +729,7 @@ Object.assign(window.app, {
             const _items = [...b.items];
             if (_items.length === 0) {
                 pages.push([]);
-            } else if (_items.length <= MAX_LINES) {
+            } else if (_items.length <= CAP_SINGLE) {
                 pages.push(_items.splice(0, _items.length));
             } else {
                 pages.push(_items.splice(0, CAP_FIRST));
@@ -848,9 +845,6 @@ Object.assign(window.app, {
                         <span class="bg-slate-100 py-1 px-3 rounded text-slate-500 font-bold">${pageNum} / ${totalPages}</span>
                     </div>
                 </div>`;
-                if (!isLast) {
-                    pagesHtml += '<div class="html2pdf__page-break"></div>';
-                }
             });
 
             this.showModal(`<div class="bg-white flex flex-col w-full" style="height: 85vh;" id="document-container">
@@ -859,7 +853,7 @@ Object.assign(window.app, {
                     <div class="flex gap-2">
                         <button onclick="window.print()" class="px-3 py-1.5 text-white rounded text-sm hover:opacity-90 transition" style="background-color:${doc.color}"><i class="fas fa-print mr-1"></i>Imprimir</button>
                         <button onclick="app.downloadPDF('printable-area', 'Recibo_${b.codigo}')" class="px-3 py-1.5 text-white rounded text-sm hover:opacity-90 transition" style="background-color:${doc.color}"><i class="fas fa-file-pdf mr-1"></i>PDF</button>
-                        <button onclick="app.sendEmail(${b.id},'${String(b.clientEmail).replace(/'/g,"\\'")}','${String(b.clientName).replace(/'/g,"\\'")}','Recibo ${String(b.codigo).replace(/'/g,"\\'")}')" class="px-3 py-1.5 text-white rounded text-sm hover:opacity-90 transition" style="background-color:${doc.color}"><i class="fas fa-paper-plane mr-1"></i>Enviar Correo</button>
+                        <button onclick="app.sendEmail(${b.id},'${String(b.clientEmail).replace(/'/g,"\\'")}','${String(b.clientName).replace(/'/g,"\\'")}','Recibo ${String(b.codigo).replace(/'/g,"\\'")}', false)" class="px-3 py-1.5 text-white rounded text-sm hover:opacity-90 transition" style="background-color:${doc.color}"><i class="fas fa-paper-plane mr-1"></i>Enviar Correo</button>
                         <button onclick="app.closeModal()" class="px-3 py-1.5 text-gray-500 hover:bg-gray-200 rounded text-sm transition">Cerrar</button>
                     </div>
                 </div>
