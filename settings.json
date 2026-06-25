@@ -1,0 +1,38 @@
+{
+    "company": {
+        "name": "Comercializadora Suncatcher",
+        "legalName": "del Norte",
+        "rfc": "CSN200210B44",
+        "logoUrl": "uploads\/logo_1780351317.png",
+        "address": "ALFARAZ 3595, RESIDENCIAL SEVILLA 2DA SECCION",
+        "phone": "686 557 2525",
+        "email": "ventas@suncatcher.com.mx"
+    },
+    "smtp": {
+        "host": "mail.suncatcher.com.mx",
+        "port": "465",
+        "secure": "ssl",
+        "user": "ventas@suncatcher.com.mx",
+        "pass": "**xmiswebs**"
+    },
+    "system": {
+        "currency": "MXN",
+        "locale": "es-MX",
+        "defaultTaxRate": 16,
+        "budgetValidityDays": 15,
+        "invoicePrefix": "PRE",
+        "autoSaveBudgets": true
+    },
+    "docConfig": {
+        "presupuesto": {
+            "color": "#0f6dc1",
+            "rowHeight": "py-2",
+            "logoUrl": "uploads\/logo_1780351317.png"
+        },
+        "recibo": {
+            "color": "#0f6dc1",
+            "rowHeight": "py-3",
+            "logoUrl": "uploads\/logo_1780351317.png"
+        }
+    }
+}

@@ -17,6 +17,10 @@ if (empty($_SESSION['logged_in'])) {
     exit;
 }
 
+// Credenciales Supabase (obtenidas de api.php)
+define('SB_URL', 'https://ewrhzalwcnzclhjortfp.supabase.co');
+define('SB_KEY', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImV3cmh6YWx3Y256Y2xoam9ydGZwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI0MDQwMTcsImV4cCI6MjA5Nzk4MDAxN30.OO7iVtklBkZwgII2nw8UTpVqv4UQuWQ9kg5IntpppCk');
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['logo'])) {
     $file = $_FILES['logo'];
 
@@ -43,17 +47,34 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['logo'])) {
         $ext = pathinfo($file['name'], PATHINFO_EXTENSION);
         $name = 'logo_' . time() . '.' . $ext;
         
-        if (!is_dir('uploads')) {
-            mkdir('uploads', 0777, true);
-        }
+        // --- SUBIR A SUPABASE STORAGE ---
+        $fileData = file_get_contents($file['tmp_name']);
+        $url = SB_URL . '/storage/v1/object/uploads/' . $name;
         
-        $path = 'uploads/' . $name;
+        $ch = curl_init($url);
+        curl_setopt_array($ch, [
+            CURLOPT_CUSTOMREQUEST => 'POST',
+            CURLOPT_POSTFIELDS => $fileData,
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_HTTPHEADER => [
+                'Authorization: Bearer ' . SB_KEY,
+                'apikey: ' . SB_KEY,
+                'Content-Type: ' . $file['type']
+            ]
+        ]);
         
-        if (move_uploaded_file($file['tmp_name'], $path)) {
-            echo json_encode(['url' => $path]);
+        $response = curl_exec($ch);
+        $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        curl_close($ch);
+        
+        if ($httpCode === 200 || $httpCode === 201) {
+            // Generar URL pública
+            $publicUrl = SB_URL . '/storage/v1/object/public/uploads/' . $name;
+            echo json_encode(['url' => $publicUrl]);
             exit;
         } else {
-            echo json_encode(['error' => 'Error al mover el archivo al servidor']);
+            $respObj = json_decode($response, true);
+            echo json_encode(['error' => 'Error al subir a Supabase: ' . ($respObj['message'] ?? $response)]);
             exit;
         }
     } else {
