@@ -161,8 +161,11 @@ Object.assign(window.app, {
 
     onLoginSuccess(username) {
         document.getElementById('login-screen').style.display = 'none';
-        document.getElementById('sidebar-username').textContent = 'Francisco Rascón';
-        document.getElementById('header-username').textContent = 'Francisco Rascón';
+        const mainPanel = document.getElementById('main-panel');
+        if (mainPanel) mainPanel.style.display = 'flex';
+        const displayName = username || 'Administrador';
+        document.getElementById('sidebar-username').textContent = displayName;
+        document.getElementById('header-username').textContent = displayName;
     },
 
     async doLogin(e) {
@@ -200,6 +203,8 @@ Object.assign(window.app, {
 
     async doLogout() {
         try { await fetch('api.php?resource=logout'); } catch(_) {}
+        const mainPanel = document.getElementById('main-panel');
+        if (mainPanel) mainPanel.style.display = 'none';
         document.getElementById('login-screen').style.display = 'flex';
         document.getElementById('login-user').value = '';
         document.getElementById('login-pass').value = '';

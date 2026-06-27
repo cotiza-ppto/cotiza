@@ -126,7 +126,7 @@
     <div id="login-screen">
         <div class="login-card">
             <div class="text-center mb-8">
-                <img id="login-logo" src="uploads/logo_1780351317.png" alt="Logo" class="h-16 w-auto object-contain mx-auto mb-4 bg-white rounded-full p-2 shadow-lg">
+                <img id="login-logo" src="uploads/logo_1780351317.png" alt="Logo" class="h-16 w-auto object-contain mx-auto mb-4 bg-white rounded-full p-2 shadow-lg" onerror="this.style.display='none'">
                 <h1 class="text-white font-bold text-2xl tracking-wide">SUNCATCHER</h1>
                 <p class="text-blue-200 text-sm mt-1">Sistema de Presupuestos</p>
             </div>
@@ -147,10 +147,13 @@
         </div>
     </div>
 
+    <!-- Main App Panel (hidden until session confirmed) -->
+    <div id="main-panel" class="flex flex-1 overflow-hidden">
+
     <!-- Sidebar -->
     <aside class="w-64 text-white flex flex-col shadow-xl no-print transition-all duration-300 z-20" style="background-color: #0f6dc1;" id="sidebar">
         <div class="p-6 flex items-center gap-3 border-b border-white/20 bg-black/10">
-            <img id="sidebar-logo" src="uploads/logo_1780351317.png" alt="Logo Suncatcher" class="h-12 w-auto object-contain bg-white rounded-full p-1 shadow-sm">
+            <img id="sidebar-logo" src="uploads/logo_1780351317.png" alt="Logo Suncatcher" class="h-12 w-auto object-contain bg-white rounded-full p-1 shadow-sm" onerror="this.style.display='none'">
             <div>
                 <h1 class="font-bold text-sm leading-tight text-yellow-300 tracking-wide">SUNCATCHER</h1>
                 <p class="text-xs text-blue-100 opacity-80">Comercializadora del Norte</p>
@@ -208,6 +211,8 @@
         </div>
     </main>
 
+    </div><!-- /#main-panel -->
+
     <!-- Modal -->
     <div id="modal-overlay" class="fixed inset-0 bg-black/50 z-50 hidden flex items-center justify-center backdrop-blur-sm transition-opacity opacity-0">
         <div id="modal-content" class="bg-white rounded-xl shadow-2xl w-full max-w-3xl m-4 transform scale-95 transition-transform duration-200 overflow-hidden max-h-[90vh] flex flex-col"></div>
@@ -232,6 +237,46 @@
     <script src="assets/js/budgets.js"></script>
     <script src="assets/js/settings.js"></script>
 
-    <!-- full.js handles DOMContentLoaded, session check, and app bootstrap -->
+    <script>
+    document.addEventListener('DOMContentLoaded', async () => {
+        // Ocultar el panel principal hasta confirmar sesión
+        // El login-screen ya es visible por CSS (display:flex)
+        const mainPanel = document.getElementById('main-panel');
+        if (mainPanel) mainPanel.style.display = 'none';
+
+        // Cargar settings desde el servidor (público, sin sesión)
+        try {
+            const res = await fetch('api.php?resource=settings');
+            if (res.ok) {
+                const srv = await res.json();
+                if (srv && typeof APP_SETTINGS !== 'undefined') {
+                    if (srv.company)   APP_SETTINGS.company   = { ...APP_SETTINGS.company,   ...srv.company };
+                    if (srv.smtp)      APP_SETTINGS.smtp      = { ...APP_SETTINGS.smtp,      ...srv.smtp };
+                    if (srv.system)    APP_SETTINGS.system    = { ...APP_SETTINGS.system,    ...srv.system };
+                    if (srv.docConfig) APP_SETTINGS.docConfig = { ...APP_SETTINGS.docConfig, ...srv.docConfig };
+                    saveSettings(APP_SETTINGS);
+                }
+            }
+        } catch(e) {}
+
+        // Aplicar logos desde settings
+        const logoUrl = APP_SETTINGS && APP_SETTINGS.company && APP_SETTINGS.company.logoUrl;
+        if (logoUrl) {
+            const loginLogo   = document.getElementById('login-logo');
+            const sidebarLogo = document.getElementById('sidebar-logo');
+            if (loginLogo)   { loginLogo.src = logoUrl;   loginLogo.style.display = ''; }
+            if (sidebarLogo) { sidebarLogo.src = logoUrl; sidebarLogo.style.display = ''; }
+        }
+
+        // Verificar sesión y arrancar la app
+        try {
+            await window.app.checkSession();
+        } catch(e) {
+            console.error('checkSession error:', e);
+            document.getElementById('login-screen').style.display = 'flex';
+            document.getElementById('login-user').focus();
+        }
+    });
+    </script>
 </body>
 </html>
