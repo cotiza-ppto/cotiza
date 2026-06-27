@@ -13,9 +13,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') { http_response_code(200); exit; }
 
 // --- Conexión ---
 if (file_exists(__DIR__ . '/db_config.php')) {
+    // Local: credenciales desde archivo (excluido de Git)
     include_once __DIR__ . '/db_config.php';
 } else {
-    die(json_encode(['error' => 'Archivo de configuración db_config.php no encontrado.']));
+    // Vercel/Producción: credenciales desde variables de entorno
+    define('DB_HOST',    getenv('DB_HOST')    ?: 'db.ewrhzalwcnzclhjortfp.supabase.co');
+    define('DB_PORT',    getenv('DB_PORT')    ?: '5432');
+    define('DB_NAME',    getenv('DB_NAME')    ?: 'postgres');
+    define('DB_USER',    getenv('DB_USER')    ?: 'postgres');
+    define('DB_PASS',    getenv('DB_PASS')    ?: '');
+    define('DB_EMPRESA', 1);
+    define('DB_ALMACEN', 'ALG');
+    define('DB_DIVISA',  'MXN');
+    define('DB_SERIE',   'A');
 }
 
 // --- Sesión ---
