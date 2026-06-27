@@ -1,20 +1,11 @@
 {
-  "builds": [
+  "headers": [
     {
-      "src": "index.php",
-      "use": "vercel-php@0.9.0"
-    },
-    {
-      "src": "api.php",
-      "use": "vercel-php@0.9.0"
-    },
-    {
-      "src": "email.php",
-      "use": "vercel-php@0.9.0"
-    },
-    {
-      "src": "upload.php",
-      "use": "vercel-php@0.9.0"
+      "source": "/(.*)",
+      "headers": [
+        { "key": "X-Frame-Options", "value": "DENY" },
+        { "key": "X-Content-Type-Options", "value": "nosniff" }
+      ]
     }
   ],
   "routes": [
@@ -24,10 +15,10 @@
     { "src": "/error_log",      "status": 403 },
     { "src": "/split_js.php",   "status": 403 },
     { "src": "/libs/(.*)",      "status": 403 },
-    { "src": "/index.php",      "dest": "/index.php" },
-    { "src": "/api.php",        "dest": "/api.php" },
-    { "src": "/email.php",      "dest": "/email.php" },
-    { "src": "/upload.php",     "dest": "/upload.php" },
+    { "src": "/api.php",        "dest": "/api/api.js" },
+    { "src": "/email.php",      "dest": "/api/email.js" },
+    { "src": "/upload.php",     "dest": "/api/upload.js" },
+    { "src": "/index.php",      "dest": "/index.html" },
     { "src": "/(.*)",           "dest": "/$1" }
   ]
 }
