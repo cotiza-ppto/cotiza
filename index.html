@@ -260,7 +260,7 @@
         } catch(e) {}
 
         // Aplicar logos desde settings
-        const logoUrl = APP_SETTINGS && APP_SETTINGS.company && APP_SETTINGS.company.logoUrl;
+        const logoUrl = (typeof APP_SETTINGS !== 'undefined' && APP_SETTINGS && APP_SETTINGS.company) ? APP_SETTINGS.company.logoUrl : null;
         if (logoUrl) {
             const loginLogo   = document.getElementById('login-logo');
             const sidebarLogo = document.getElementById('sidebar-logo');
