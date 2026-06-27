@@ -1,18 +1,22 @@
 {
-  "functions": {
-    "index.php": {
-      "runtime": "vercel-php@0.9.0"
+  "builds": [
+    {
+      "src": "index.php",
+      "use": "vercel-php@0.9.0"
     },
-    "api.php": {
-      "runtime": "vercel-php@0.9.0"
+    {
+      "src": "api.php",
+      "use": "vercel-php@0.9.0"
     },
-    "email.php": {
-      "runtime": "vercel-php@0.9.0"
+    {
+      "src": "email.php",
+      "use": "vercel-php@0.9.0"
     },
-    "upload.php": {
-      "runtime": "vercel-php@0.9.0"
+    {
+      "src": "upload.php",
+      "use": "vercel-php@0.9.0"
     }
-  },
+  ],
   "routes": [
     { "src": "/db_config.php",  "status": 403 },
     { "src": "/settings.json",  "status": 403 },
