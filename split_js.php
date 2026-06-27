@@ -42,7 +42,7 @@ foreach ($lines as $line) {
 }
 
 // Write the files
-file_put_contents('assets/js/api.js', $coreCode);
+file_put_contents('assets/js/core.js', $coreCode);
 
 file_put_contents('assets/js/app.js', "window.app = window.app || {};\nObject.assign(window.app, {\n" . $modules['APP'] . "\n});\n");
 

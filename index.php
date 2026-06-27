@@ -225,7 +225,7 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 
     <!-- Application modules (order matters) -->
-    <script src="assets/js/api.js"></script>
+    <script src="assets/js/core.js"></script>
     <script src="assets/js/app.js"></script>
     <script src="assets/js/dashboard.js"></script>
     <script src="assets/js/clients.js"></script>
@@ -244,7 +244,7 @@
             const res = await fetch('api.php?resource=settings');
             if (res.ok) {
                 const srv = await res.json();
-                if (srv) {
+                if (srv && typeof APP_SETTINGS !== 'undefined') {
                 // Deep merge: preserve defaults for missing nested keys
                 if (srv.company) APP_SETTINGS.company = { ...APP_SETTINGS.company, ...srv.company };
                 if (srv.smtp)    APP_SETTINGS.smtp    = { ...APP_SETTINGS.smtp, ...srv.smtp };
@@ -256,10 +256,10 @@
         } catch(e) {}
 
         const loginLogo = document.getElementById('login-logo');
-        if (loginLogo && APP_SETTINGS.company.logoUrl) loginLogo.src = APP_SETTINGS.company.logoUrl;
+        if (loginLogo && typeof APP_SETTINGS !== 'undefined' && APP_SETTINGS.company && APP_SETTINGS.company.logoUrl) loginLogo.src = APP_SETTINGS.company.logoUrl;
 
         const sidebarLogo = document.getElementById('sidebar-logo');
-        if (sidebarLogo && APP_SETTINGS.company.logoUrl) sidebarLogo.src = APP_SETTINGS.company.logoUrl;
+        if (sidebarLogo && typeof APP_SETTINGS !== 'undefined' && APP_SETTINGS.company && APP_SETTINGS.company.logoUrl) sidebarLogo.src = APP_SETTINGS.company.logoUrl;
 
         try {
             await app.checkSession();

@@ -1,10 +1,18 @@
 {
-  "builds": [
-    {
-      "src": "*.php",
-      "use": "vercel-php@0.9.0"
+  "functions": {
+    "index.php": {
+      "runtime": "vercel-php@0.9.0"
+    },
+    "api.php": {
+      "runtime": "vercel-php@0.9.0"
+    },
+    "email.php": {
+      "runtime": "vercel-php@0.9.0"
+    },
+    "upload.php": {
+      "runtime": "vercel-php@0.9.0"
     }
-  ],
+  },
   "routes": [
     { "src": "/db_config.php",  "status": 403 },
     { "src": "/settings.json",  "status": 403 },
@@ -12,6 +20,10 @@
     { "src": "/error_log",      "status": 403 },
     { "src": "/split_js.php",   "status": 403 },
     { "src": "/libs/(.*)",      "status": 403 },
+    { "src": "/index.php",      "dest": "/index.php" },
+    { "src": "/api.php",        "dest": "/api.php" },
+    { "src": "/email.php",      "dest": "/email.php" },
+    { "src": "/upload.php",     "dest": "/upload.php" },
     { "src": "/(.*)",           "dest": "/$1" }
   ]
 }
