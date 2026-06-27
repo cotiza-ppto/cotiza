@@ -10,9 +10,9 @@
     }
   ],
   "rewrites": [
-    { "source": "/api.php",    "destination": "/api/api.js" },
-    { "source": "/email.php",  "destination": "/api/email.js" },
-    { "source": "/upload.php", "destination": "/api/upload.js" },
+    { "source": "/api.php",    "destination": "/api/api" },
+    { "source": "/email.php",  "destination": "/api/email" },
+    { "source": "/upload.php", "destination": "/api/upload" },
     { "source": "/index.php",  "destination": "/index.html" }
   ],
   "redirects": [],

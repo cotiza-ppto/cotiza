@@ -3,7 +3,6 @@
   "version": "1.0.0",
   "type": "module",
   "description": "Sistema de Presupuestos Suncatcher del Norte",
-  "main": "api/api.js",
   "dependencies": {
     "bcryptjs": "^2.4.3",
     "busboy": "^1.6.0",
