@@ -1814,22 +1814,29 @@ app.debouncedFilterBudgets = app.debounce(app.filterBudgets, 200);
 app.debouncedFilterProducts = app.debounce(app.filterProducts, 200);
 
 document.addEventListener('DOMContentLoaded', async () => {
-    // Hide login screen initially (shown via CSS), then check session
+    // Hide login screen initially, then check session
     document.getElementById('login-screen').style.display = 'none';
     
     try {
         const res = await fetch('api.php?resource=settings');
         if (res.ok) {
             const srv = await res.json();
-            if (srv && srv.company) { APP_SETTINGS = { ...APP_SETTINGS, ...srv }; saveSettings(APP_SETTINGS); }
+            if (srv && typeof APP_SETTINGS !== 'undefined') {
+                // Deep merge: preserve defaults for missing nested keys
+                if (srv.company)   APP_SETTINGS.company   = { ...APP_SETTINGS.company,   ...srv.company };
+                if (srv.smtp)      APP_SETTINGS.smtp      = { ...APP_SETTINGS.smtp,      ...srv.smtp };
+                if (srv.system)    APP_SETTINGS.system    = { ...APP_SETTINGS.system,    ...srv.system };
+                if (srv.docConfig) APP_SETTINGS.docConfig = { ...APP_SETTINGS.docConfig, ...srv.docConfig };
+                saveSettings(APP_SETTINGS);
+            }
         }
     } catch(e) {}
     
     const loginLogo = document.getElementById('login-logo');
-    if (loginLogo && APP_SETTINGS.company.logoUrl) loginLogo.src = APP_SETTINGS.company.logoUrl;
+    if (loginLogo && APP_SETTINGS.company && APP_SETTINGS.company.logoUrl) loginLogo.src = APP_SETTINGS.company.logoUrl;
     
     const sidebarLogo = document.getElementById('sidebar-logo');
-    if (sidebarLogo && APP_SETTINGS.company.logoUrl) sidebarLogo.src = APP_SETTINGS.company.logoUrl;
+    if (sidebarLogo && APP_SETTINGS.company && APP_SETTINGS.company.logoUrl) sidebarLogo.src = APP_SETTINGS.company.logoUrl;
     
     try {
         await app.checkSession();

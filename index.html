@@ -232,42 +232,6 @@
     <script src="assets/js/budgets.js"></script>
     <script src="assets/js/settings.js"></script>
 
-    <script>
-    // Bootstrap: initialize the global `app` object and start the app
-    const app = window.app;
-
-    document.addEventListener('DOMContentLoaded', async () => {
-        document.getElementById('login-screen').style.display = 'none';
-
-        try {
-            const res = await fetch('api.php?resource=settings');
-            if (res.ok) {
-                const srv = await res.json();
-                if (srv && typeof APP_SETTINGS !== 'undefined') {
-                // Deep merge: preserve defaults for missing nested keys
-                if (srv.company) APP_SETTINGS.company = { ...APP_SETTINGS.company, ...srv.company };
-                if (srv.smtp)    APP_SETTINGS.smtp    = { ...APP_SETTINGS.smtp, ...srv.smtp };
-                if (srv.system)  APP_SETTINGS.system  = { ...APP_SETTINGS.system, ...srv.system };
-                if (srv.docConfig) APP_SETTINGS.docConfig = { ...APP_SETTINGS.docConfig, ...srv.docConfig };
-                saveSettings(APP_SETTINGS);
-            }
-            }
-        } catch(e) {}
-
-        const loginLogo = document.getElementById('login-logo');
-        if (loginLogo && typeof APP_SETTINGS !== 'undefined' && APP_SETTINGS.company && APP_SETTINGS.company.logoUrl) loginLogo.src = APP_SETTINGS.company.logoUrl;
-
-        const sidebarLogo = document.getElementById('sidebar-logo');
-        if (sidebarLogo && typeof APP_SETTINGS !== 'undefined' && APP_SETTINGS.company && APP_SETTINGS.company.logoUrl) sidebarLogo.src = APP_SETTINGS.company.logoUrl;
-
-        try {
-            await app.checkSession();
-        } catch(e) {
-            console.error('checkSession error:', e);
-            document.getElementById('login-screen').style.display = 'flex';
-            document.getElementById('login-user').focus();
-        }
-    });
-    </script>
+    <!-- full.js handles DOMContentLoaded, session check, and app bootstrap -->
 </body>
 </html>
