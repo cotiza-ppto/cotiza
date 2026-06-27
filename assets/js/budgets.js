@@ -128,7 +128,7 @@ Object.assign(window.app, {
         if (!q || q.length < 2) { drop.classList.add('hidden'); return; }
         if (this._prodSearchAbort) this._prodSearchAbort.abort();
         this._prodSearchAbort = new AbortController();
-        fetch(`api.php?resource=products&search=${encodeURIComponent(q)}`, { signal: this._prodSearchAbort.signal })
+        fetch(`api/api?resource=products&search=${encodeURIComponent(q)}`, { signal: this._prodSearchAbort.signal })
             .then(r => r.json())
             .then(data => {
                 if (!Array.isArray(data) || !data.length) { drop.classList.add('hidden'); return; }
@@ -683,7 +683,7 @@ Object.assign(window.app, {
                 return;
             }
             try {
-                const res = await fetch('email.php', {
+                const res = await fetch('api/email', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ to, bcc, subject, html: fullHtml, pdfBase64, pdfName: `${codigo}.pdf` })

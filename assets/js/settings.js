@@ -100,7 +100,7 @@ Object.assign(window.app, {
         formData.append('logo', file);
         app.showToast('Subiendo imagen...', 'success');
         try {
-            const res = await fetch('upload.php', { method: 'POST', body: formData });
+            const res = await fetch('api/upload', { method: 'POST', body: formData });
             const data = await res.json();
             if (data.url) {
                 document.getElementById(urlInputId).value = data.url;

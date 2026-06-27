@@ -42,7 +42,7 @@ let APP_SETTINGS = getSettings();
 // ============================================
 const api = {
     async request(method, resource, id = null, body = null) {
-        let url = `api.php?resource=${resource}`;
+        let url = `api/api?resource=${resource}`;
         if (id !== null && id !== undefined) url += `&id=${encodeURIComponent(id)}`;
         const opts = { method };
         if (body) { opts.headers = { 'Content-Type': 'application/json' }; opts.body = JSON.stringify(body); }
@@ -204,7 +204,7 @@ const app = {
     // --- Init ---
     async checkSession() {
         try {
-            const res = await fetch('api.php?resource=check_session');
+            const res = await fetch('api/api?resource=check_session');
             if (res.ok) {
                 const data = await res.json();
                 this.onLoginSuccess(data.username);
@@ -236,7 +236,7 @@ const app = {
         btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Verificando...';
         errEl.textContent = '';
         try {
-            const res = await fetch('api.php?resource=login', {
+            const res = await fetch('api/api?resource=login', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ username: user, password: pass })
@@ -259,7 +259,7 @@ const app = {
     },
 
     async doLogout() {
-        try { await fetch('api.php?resource=logout'); } catch(_) {}
+        try { await fetch('api/api?resource=logout'); } catch(_) {}
         document.getElementById('login-screen').style.display = 'flex';
         document.getElementById('login-user').value = '';
         document.getElementById('login-pass').value = '';
@@ -816,7 +816,7 @@ const app = {
         if (!q || q.length < 2) { drop.classList.add('hidden'); return; }
         if (this._prodSearchAbort) this._prodSearchAbort.abort();
         this._prodSearchAbort = new AbortController();
-        fetch(`api.php?resource=products&search=${encodeURIComponent(q)}`, { signal: this._prodSearchAbort.signal })
+        fetch(`api/api?resource=products&search=${encodeURIComponent(q)}`, { signal: this._prodSearchAbort.signal })
             .then(r => r.json())
             .then(data => {
                 if (!Array.isArray(data) || !data.length) { drop.classList.add('hidden'); return; }
@@ -1380,7 +1380,7 @@ const app = {
                 return;
             }
             try {
-                const res = await fetch('email.php', {
+                const res = await fetch('api/email', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ to, bcc, subject, html: fullHtml, pdfBase64, pdfName: `${codigo}.pdf` })
@@ -1676,7 +1676,7 @@ const app = {
         formData.append('logo', file);
         app.showToast('Subiendo imagen...', 'success');
         try {
-            const res = await fetch('upload.php', { method: 'POST', body: formData });
+            const res = await fetch('api/upload', { method: 'POST', body: formData });
             const data = await res.json();
             if (data.url) {
                 document.getElementById(urlInputId).value = data.url;
@@ -1818,7 +1818,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     document.getElementById('login-screen').style.display = 'none';
     
     try {
-        const res = await fetch('api.php?resource=settings');
+        const res = await fetch('api/api?resource=settings');
         if (res.ok) {
             const srv = await res.json();
             if (srv && typeof APP_SETTINGS !== 'undefined') {

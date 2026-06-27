@@ -144,7 +144,7 @@ Object.assign(window.app, {
     // --- Init ---
     async checkSession() {
         try {
-            const res = await fetch('api.php?resource=check_session');
+            const res = await fetch('api/api?resource=check_session');
             if (res.ok) {
                 const data = await res.json();
                 this.onLoginSuccess(data.username);
@@ -179,7 +179,7 @@ Object.assign(window.app, {
         btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Verificando...';
         errEl.textContent = '';
         try {
-            const res = await fetch('api.php?resource=login', {
+            const res = await fetch('api/api?resource=login', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ username: user, password: pass })
@@ -202,7 +202,7 @@ Object.assign(window.app, {
     },
 
     async doLogout() {
-        try { await fetch('api.php?resource=logout'); } catch(_) {}
+        try { await fetch('api/api?resource=logout'); } catch(_) {}
         const mainPanel = document.getElementById('main-panel');
         if (mainPanel) mainPanel.style.display = 'none';
         document.getElementById('login-screen').style.display = 'flex';

@@ -42,7 +42,7 @@ let APP_SETTINGS = getSettings();
 // ============================================
 const api = {
     async request(method, resource, id = null, body = null) {
-        let url = `api.php?resource=${resource}`;
+        let url = `api/api?resource=${resource}`;
         if (id !== null && id !== undefined) url += `&id=${encodeURIComponent(id)}`;
         const opts = { method };
         if (body) { opts.headers = { 'Content-Type': 'application/json' }; opts.body = JSON.stringify(body); }

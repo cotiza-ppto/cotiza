@@ -246,7 +246,7 @@
 
         // Cargar settings desde el servidor (público, sin sesión)
         try {
-            const res = await fetch('api.php?resource=settings');
+            const res = await fetch('api/api?resource=settings');
             if (res.ok) {
                 const srv = await res.json();
                 if (srv && typeof APP_SETTINGS !== 'undefined') {
