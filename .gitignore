@@ -1,0 +1,18 @@
+# Credenciales y archivos sensibles
+db_config.php
+settings.json
+
+# Archivos de pruebas locales
+test.php
+test2.php
+test_put.php
+set_admin_password.php
+debug.txt
+
+# Carpetas de datos locales
+uploads/
+
+# IDEs
+.idea/
+.vscode/
+.DS_Store

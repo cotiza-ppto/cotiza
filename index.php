@@ -1,0 +1,274 @@
+<?php header('X-Frame-Options: DENY'); header('X-Content-Type-Options: nosniff'); ?>
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistema de Presupuestos - Comercializadora Suncatcher del Norte</title>
+    <meta name="robots" content="noindex, nofollow">
+    <meta name="description" content="Sistema de gestión de presupuestos para Comercializadora Suncatcher del Norte">
+    <link rel="icon" type="image/png" href="favicon.png">
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+    <!-- Tom Select for searchable dropdowns -->
+    <link href="https://cdn.jsdelivr.net/npm/tom-select@2.2.2/dist/css/tom-select.default.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/tom-select@2.2.2/dist/js/tom-select.complete.min.js"></script>
+
+    <!-- html2pdf for PDF generation -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #f3f4f6; }
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: #f1f1f1; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+        .fade-in { animation: fadeIn 0.3s ease-in-out forwards; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .sidebar-link.active { background-color: rgba(255, 255, 255, 0.15); border-left: 4px solid #fbbf24; }
+
+        /* ---- Tamaño carta (8.5 x 11in) para documentos ---- */
+        .page-sheet {
+            width: 720px;
+            height: 960px;
+            margin: 0 auto 24px auto;
+            padding: 0;
+            box-sizing: border-box;
+            background: white;
+            position: relative;
+            box-shadow: none !important;
+            page-break-after: always;
+            break-after: page;
+            overflow: hidden;
+        }
+        .page-sheet:last-child {
+            page-break-after: avoid;
+            break-after: avoid;
+        }
+        .signature-block {
+            page-break-inside: avoid;
+            break-inside: avoid;
+        }
+        @page { size: letter portrait; margin: 0; }
+        @media print {
+            .no-print { display: none !important; }
+            body { background: white; margin: 0 !important; padding: 0 !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+            * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+            #content-area { overflow: visible !important; padding: 0 !important; }
+            #modal-overlay { position: static !important; background: none !important; display: block !important; opacity: 1 !important; }
+            #modal-content { max-height: none !important; overflow: visible !important; transform: none !important; max-width: none !important; margin: 0 !important; box-shadow: none !important; border-radius: 0 !important; }
+            #document-container { height: auto !important; }
+            #document-container > .overflow-y-scroll { overflow: visible !important; height: auto !important; padding: 0 !important; }
+            .html2pdf__page-break { display: none !important; }
+            .page-sheet {
+                margin: 0 !important;
+                border: none !important;
+                box-shadow: none !important;
+                page-break-after: always;
+                break-after: page;
+                height: 960px !important;
+                width: 720px !important;
+            }
+            .page-sheet:last-child {
+                page-break-after: avoid;
+                break-after: avoid;
+            }
+        }
+
+        /* ---- Login Screen ---- */
+        #login-screen {
+            position: fixed; inset: 0; z-index: 9999;
+            background: linear-gradient(135deg, #0f6dc1 0%, #0a4a8a 60%, #051e3e 100%);
+            display: flex; align-items: center; justify-content: center;
+        }
+        #login-screen .login-card {
+            background: rgba(255,255,255,0.07);
+            border: 1px solid rgba(255,255,255,0.15);
+            backdrop-filter: blur(18px);
+            border-radius: 20px;
+            padding: 48px 40px;
+            width: 100%; max-width: 400px;
+            box-shadow: 0 25px 60px rgba(0,0,0,0.4);
+        }
+        #login-screen input {
+            background: rgba(255,255,255,0.12);
+            border: 1px solid rgba(255,255,255,0.25);
+            color: white;
+            border-radius: 10px;
+            padding: 12px 16px;
+            width: 100%; outline: none;
+            font-size: 15px;
+            transition: border-color .2s;
+        }
+        #login-screen input::placeholder { color: rgba(255,255,255,0.5); }
+        #login-screen input:focus { border-color: #fbbf24; }
+        #login-screen .login-btn {
+            background: #fbbf24; color: #1e293b;
+            font-weight: 700; font-size: 15px;
+            padding: 13px; border-radius: 10px;
+            width: 100%; border: none; cursor: pointer;
+            transition: transform .15s, box-shadow .15s;
+        }
+        #login-screen .login-btn:hover { transform: translateY(-1px); box-shadow: 0 8px 20px rgba(251,191,36,0.4); }
+        #login-screen .login-btn:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+        .login-error { color: #fca5a5; font-size: 13px; text-align: center; min-height: 20px; }
+    </style>
+</head>
+<body class="text-gray-800 h-screen flex overflow-hidden">
+
+    <!-- =========== LOGIN SCREEN =========== -->
+    <div id="login-screen">
+        <div class="login-card">
+            <div class="text-center mb-8">
+                <img id="login-logo" src="uploads/logo_1780351317.png" alt="Logo" class="h-16 w-auto object-contain mx-auto mb-4 bg-white rounded-full p-2 shadow-lg">
+                <h1 class="text-white font-bold text-2xl tracking-wide">SUNCATCHER</h1>
+                <p class="text-blue-200 text-sm mt-1">Sistema de Presupuestos</p>
+            </div>
+            <form id="login-form" onsubmit="app.doLogin(event)" class="space-y-4">
+                <div>
+                    <label class="block text-blue-200 text-sm font-medium mb-2">Usuario</label>
+                    <input type="text" id="login-user" placeholder="Usuario" autocomplete="username" required>
+                </div>
+                <div>
+                    <label class="block text-blue-200 text-sm font-medium mb-2">Contraseña</label>
+                    <input type="password" id="login-pass" placeholder="Contraseña" autocomplete="current-password" required>
+                </div>
+                <p class="login-error" id="login-error"></p>
+                <button type="submit" class="login-btn" id="login-btn">
+                    <i class="fas fa-sign-in-alt mr-2"></i>Iniciar Sesión
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Sidebar -->
+    <aside class="w-64 text-white flex flex-col shadow-xl no-print transition-all duration-300 z-20" style="background-color: #0f6dc1;" id="sidebar">
+        <div class="p-6 flex items-center gap-3 border-b border-white/20 bg-black/10">
+            <img id="sidebar-logo" src="uploads/logo_1780351317.png" alt="Logo Suncatcher" class="h-12 w-auto object-contain bg-white rounded-full p-1 shadow-sm">
+            <div>
+                <h1 class="font-bold text-sm leading-tight text-yellow-300 tracking-wide">SUNCATCHER</h1>
+                <p class="text-xs text-blue-100 opacity-80">Comercializadora del Norte</p>
+            </div>
+        </div>
+
+        <nav class="flex-1 py-6 space-y-1">
+            <a href="#" onclick="app.navigate('dashboard'); return false;" id="link-dashboard" class="sidebar-link active flex items-center px-6 py-3 hover:bg-black/10 transition-colors">
+                <i class="fas fa-home w-6 text-blue-200"></i><span class="font-medium">Inicio</span>
+            </a>
+            <a href="#" onclick="app.navigate('clients'); return false;" id="link-clients" class="sidebar-link flex items-center px-6 py-3 hover:bg-black/10 transition-colors">
+                <i class="fas fa-users w-6 text-blue-200"></i><span class="font-medium">Clientes</span>
+            </a>
+            <a href="#" onclick="app.navigate('products'); return false;" id="link-products" class="sidebar-link flex items-center px-6 py-3 hover:bg-black/10 transition-colors">
+                <i class="fas fa-box-open w-6 text-blue-200"></i><span class="font-medium">Productos</span>
+            </a>
+            <a href="#" onclick="app.navigate('budgets'); return false;" id="link-budgets" class="sidebar-link flex items-center px-6 py-3 hover:bg-black/10 transition-colors">
+                <i class="fas fa-file-invoice-dollar w-6 text-blue-200"></i><span class="font-medium">Presupuestos</span>
+            </a>
+            <a href="#" onclick="app.navigate('unidades'); return false;" id="link-unidades" class="sidebar-link flex items-center px-6 py-3 hover:bg-black/10 transition-colors">
+                <i class="fas fa-ruler-horizontal w-6 text-blue-200"></i><span class="font-medium">Unidades</span>
+            </a>
+            <a href="#" onclick="app.navigate('settings'); return false;" id="link-settings" class="sidebar-link flex items-center px-6 py-3 hover:bg-black/10 transition-colors">
+                <i class="fas fa-sliders-h w-6 text-blue-200"></i><span class="font-medium">Configuración</span>
+            </a>
+        </nav>
+
+        <div class="p-4 border-t border-white/20 bg-black/5">
+            <div class="flex items-center gap-3 mb-3">
+                <img src="https://ui-avatars.com/api/?name=Admin&background=fbbf24&color=1e293b" alt="Admin" class="w-8 h-8 rounded-full border-2 border-white/50">
+                <div class="flex-1 min-w-0">
+                    <p class="text-sm font-medium truncate" id="sidebar-username">Francisco Rascón</p>
+                    <p class="text-xs text-blue-100 opacity-70" id="db-status">administrador</p>
+                </div>
+            </div>
+            <button onclick="app.doLogout()" class="w-full flex items-center justify-center gap-2 text-xs text-red-300 hover:text-white hover:bg-red-500/30 rounded-lg py-2 px-3 transition">
+                <i class="fas fa-sign-out-alt"></i> Cerrar Sesión
+            </button>
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="flex-1 flex flex-col h-full relative overflow-hidden">
+        <header class="bg-white shadow-sm h-16 flex items-center justify-between px-8 z-10 no-print">
+            <h2 id="page-title" class="text-xl font-bold text-slate-800">Cargando...</h2>
+            <div class="flex items-center gap-4">
+                <span class="text-sm text-gray-400 hidden sm:block">Bienvenido, <span id="header-username" class="font-semibold text-slate-600">Francisco Rascón</span></span>
+                <button onclick="app.navigate('settings'); return false;" class="p-2 text-slate-400 hover:text-[#0f6dc1] transition" title="Configuración"><i class="fas fa-cog"></i></button>
+            </div>
+        </header>
+        <div id="content-area" class="flex-1 overflow-auto p-8 bg-gray-50 relative">
+            <div class="flex items-center justify-center h-full text-gray-400">
+                <i class="fas fa-circle-notch fa-spin mr-2"></i> Inicializando sistema...
+            </div>
+        </div>
+    </main>
+
+    <!-- Modal -->
+    <div id="modal-overlay" class="fixed inset-0 bg-black/50 z-50 hidden flex items-center justify-center backdrop-blur-sm transition-opacity opacity-0">
+        <div id="modal-content" class="bg-white rounded-xl shadow-2xl w-full max-w-3xl m-4 transform scale-95 transition-transform duration-200 overflow-hidden max-h-[90vh] flex flex-col"></div>
+    </div>
+
+    <!-- Toast -->
+    <div id="toast" class="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 scale-90 opacity-0 transition-all duration-300 z-[9999] flex items-center gap-4 text-white px-8 py-5 rounded-xl shadow-2xl" style="background-color: #0f6dc1; pointer-events: none;">
+        <i id="toast-icon" class="fas fa-check-circle text-yellow-300 text-2xl"></i>
+        <span id="toast-message" class="text-lg font-medium">Operación exitosa</span>
+    </div>
+
+
+    <!-- Chart.js for dashboard -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+
+    <!-- Application modules (order matters) -->
+    <script src="assets/js/api.js"></script>
+    <script src="assets/js/app.js"></script>
+    <script src="assets/js/dashboard.js"></script>
+    <script src="assets/js/clients.js"></script>
+    <script src="assets/js/products.js"></script>
+    <script src="assets/js/budgets.js"></script>
+    <script src="assets/js/settings.js"></script>
+
+    <script>
+    // Bootstrap: initialize the global `app` object and start the app
+    const app = window.app;
+
+    document.addEventListener('DOMContentLoaded', async () => {
+        document.getElementById('login-screen').style.display = 'none';
+
+        try {
+            const res = await fetch('api.php?resource=settings');
+            if (res.ok) {
+                const srv = await res.json();
+                if (srv) {
+                // Deep merge: preserve defaults for missing nested keys
+                if (srv.company) APP_SETTINGS.company = { ...APP_SETTINGS.company, ...srv.company };
+                if (srv.smtp)    APP_SETTINGS.smtp    = { ...APP_SETTINGS.smtp, ...srv.smtp };
+                if (srv.system)  APP_SETTINGS.system  = { ...APP_SETTINGS.system, ...srv.system };
+                if (srv.docConfig) APP_SETTINGS.docConfig = { ...APP_SETTINGS.docConfig, ...srv.docConfig };
+                saveSettings(APP_SETTINGS);
+            }
+            }
+        } catch(e) {}
+
+        const loginLogo = document.getElementById('login-logo');
+        if (loginLogo && APP_SETTINGS.company.logoUrl) loginLogo.src = APP_SETTINGS.company.logoUrl;
+
+        const sidebarLogo = document.getElementById('sidebar-logo');
+        if (sidebarLogo && APP_SETTINGS.company.logoUrl) sidebarLogo.src = APP_SETTINGS.company.logoUrl;
+
+        try {
+            await app.checkSession();
+        } catch(e) {
+            console.error('checkSession error:', e);
+            document.getElementById('login-screen').style.display = 'flex';
+            document.getElementById('login-user').focus();
+        }
+    });
+    </script>
+</body>
+</html>
