@@ -4,20 +4,11 @@ settings.json
 *.env
 
 # Archivos de pruebas locales
-test*.php
-set_admin_password.php
-debug.txt
-split_js.php
-
-# Carpetas de datos locales
-uploads/
+npm-debug.log*
 
 # Node.js
 node_modules/
 .env
-.env.local
-.env.*.local
-npm-debug.log*
 
 # IDEs
 .idea/
