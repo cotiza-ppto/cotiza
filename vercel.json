@@ -9,16 +9,13 @@
     }
   ],
   "routes": [
-    { "src": "/db_config.php",  "status": 403 },
-    { "src": "/settings.json",  "status": 403 },
-    { "src": "/debug.txt",      "status": 403 },
-    { "src": "/error_log",      "status": 403 },
-    { "src": "/split_js.php",   "status": 403 },
-    { "src": "/libs/(.*)",      "status": 403 },
-    { "src": "/api.php",        "dest": "/api/api.js" },
-    { "src": "/email.php",      "dest": "/api/email.js" },
-    { "src": "/upload.php",     "dest": "/api/upload.js" },
-    { "src": "/index.php",      "dest": "/index.html" },
-    { "src": "/(.*)",           "dest": "/$1" }
+    { "src": "/error_log",   "status": 403 },
+    { "src": "/uploads/(.*)", "status": 403 },
+    { "src": "/api.php",     "dest": "/api/api.js" },
+    { "src": "/email.php",   "dest": "/api/email.js" },
+    { "src": "/upload.php",  "dest": "/api/upload.js" },
+    { "src": "/index.php",   "dest": "/index.html" },
+    { "src": "/(.*)",        "dest": "/$1" }
   ]
 }
+

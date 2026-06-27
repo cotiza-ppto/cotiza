@@ -72,12 +72,12 @@ export default async function handler(req, res) {
     }
 
     const smtpDefaults = {
-      host: 'smtp.gmail.com',
+      host: '',
       port: 587,
       secure: 'tls',
-      user: 'ventas@suncatcher.com.mx',
+      user: '',
       pass: '',
-      from: 'ventas@suncatcher.com.mx',
+      from: '',
       fromName: 'Comercializadora Suncatcher del Norte'
     };
 
