@@ -1,16 +1,23 @@
 # Credenciales y archivos sensibles
 db_config.php
 settings.json
+*.env
 
 # Archivos de pruebas locales
-test.php
-test2.php
-test_put.php
+test*.php
 set_admin_password.php
 debug.txt
+split_js.php
 
 # Carpetas de datos locales
 uploads/
+
+# Node.js
+node_modules/
+.env
+.env.local
+.env.*.local
+npm-debug.log*
 
 # IDEs
 .idea/
