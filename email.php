@@ -1,11 +1,63 @@
 <?php
-session_start();
-header('Content-Type: application/json');
+// ============================================================
+// email.php — Envío de correos para Sistema de Presupuestos
+// ============================================================
+header('Content-Type: application/json; charset=utf-8');
+header('Cache-Control: no-cache, must-revalidate');
+header('Access-Control-Allow-Methods: POST, OPTIONS');
+header('Access-Control-Allow-Headers: Content-Type');
+header('Access-Control-Allow-Credentials: true');
 header('X-Frame-Options: DENY');
 header('X-Content-Type-Options: nosniff');
 
-// Requiere autenticación
-if (empty($_SESSION['logged_in'])) {
+// CORS: permitir mismo origen y APP_URL configurado en Vercel
+$origin      = $_SERVER['HTTP_ORIGIN'] ?? '';
+$appUrl      = getenv('APP_URL') ?: '';
+$localOrigins = ['http://localhost', 'http://localhost:8000', 'http://127.0.0.1'];
+if ($origin && ($origin === $appUrl || in_array($origin, $localOrigins))) {
+    header("Access-Control-Allow-Origin: $origin");
+} elseif (!$origin) {
+    header('Access-Control-Allow-Origin: *');
+} else {
+    header('Access-Control-Allow-Origin: ' . ($appUrl ?: $origin));
+}
+
+if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') { http_response_code(200); exit; }
+
+// --- Conexión ---
+if (file_exists(__DIR__ . '/db_config.php')) {
+    include_once __DIR__ . '/db_config.php';
+} else {
+    define('DB_HOST',    getenv('DB_HOST')    ?: 'db.ewrhzalwcnzclhjortfp.supabase.co');
+    define('DB_PORT',    getenv('DB_PORT')    ?: '5432');
+    define('DB_NAME',    getenv('DB_NAME')    ?: 'postgres');
+    define('DB_USER',    getenv('DB_USER')    ?: 'postgres');
+    define('DB_PASS',    getenv('DB_PASS')    ?: '');
+}
+
+try {
+    $pdo = new PDO(
+        "pgsql:host=" . DB_HOST . ";port=" . DB_PORT . ";dbname=" . DB_NAME,
+        DB_USER, DB_PASS,
+        [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION, PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC]
+    );
+} catch (PDOException $e) {
+    http_response_code(500);
+    die(json_encode(['error' => 'Error de conexión: ' . $e->getMessage()]));
+}
+
+// ---- Verificar sesión por Token ----
+define('TOKEN_COOKIE', 'SUNCATCHER_TOKEN');
+$token = $_COOKIE[TOKEN_COOKIE] ?? '';
+if (!$token || strlen($token) < 32) {
+    http_response_code(401);
+    echo json_encode(['error' => 'No autorizado']);
+    exit;
+}
+$stmt = $pdo->prepare("SELECT username FROM sessions WHERE token = ? AND expires_at > NOW()");
+$stmt->execute([$token]);
+$currentSession = $stmt->fetch();
+if (!$currentSession) {
     http_response_code(401);
     echo json_encode(['error' => 'No autorizado']);
     exit;
@@ -29,21 +81,23 @@ if (!$data || empty($data['to']) || empty($data['html'])) {
 $mail = new PHPMailer(true);
 
 try {
-    // Cargar configuración SMTP desde settings.json
+    // Cargar configuración SMTP desde la BD
     $smtpDefaults = ['host'=>'smtp.gmail.com', 'port'=>'587', 'secure'=>'tls', 'user'=>'ventas@suncatcher.com.mx', 'pass'=>''];
-    if (file_exists('settings.json')) {
-        $settings = json_decode(file_get_contents('settings.json'), true);
-        if (!empty($settings['smtp'])) {
-            // Map settings.json keys (username, password) to expected keys (user, pass)
-            $s = $settings['smtp'];
-            $smtpDefaults['host'] = $s['host'] ?? $smtpDefaults['host'];
-            $smtpDefaults['port'] = $s['port'] ?? $smtpDefaults['port'];
-            $smtpDefaults['user'] = $s['username'] ?? $s['user'] ?? $smtpDefaults['user'];
-            $smtpDefaults['pass'] = $s['password'] ?? $s['pass'] ?? $smtpDefaults['pass'];
-            $smtpDefaults['secure'] = $s['secure'] ?? $smtpDefaults['secure'];
-            $smtpDefaults['from'] = $s['from'] ?? $s['fromEmail'] ?? $smtpDefaults['user'];
-            $smtpDefaults['fromName'] = $s['fromName'] ?? $smtpDefaults['fromName'] ?? '';
-        }
+    
+    $cStmt = $pdo->query("SELECT valor FROM configuracion WHERE clave = 'app_settings'");
+    $cRow = $cStmt->fetch();
+    $settings = $cRow ? (json_decode($cRow['valor'], true) ?: []) : [];
+
+    if (!empty($settings['smtp'])) {
+        $s = $settings['smtp'];
+        $smtpDefaults['host'] = $s['host'] ?? $smtpDefaults['host'];
+        $smtpDefaults['port'] = $s['port'] ?? $smtpDefaults['port'];
+        $smtpDefaults['user'] = $s['username'] ?? $s['user'] ?? $smtpDefaults['user'];
+        // Vercel / BD contiene el password real (api.php lo mantiene al guardar)
+        $smtpDefaults['pass'] = $s['password'] ?? $s['pass'] ?? $smtpDefaults['pass'];
+        $smtpDefaults['secure'] = $s['secure'] ?? $smtpDefaults['secure'];
+        $smtpDefaults['from'] = $s['from'] ?? $s['fromEmail'] ?? $smtpDefaults['user'];
+        $smtpDefaults['fromName'] = $s['fromName'] ?? '';
     }
     $smtpConfig = $smtpDefaults;
 
@@ -79,7 +133,7 @@ try {
     // Optional logo URL (passed from frontend as 'logo')
     $logoImg = $data['logo'] ?? '';
     $logoTag = $logoImg ? "<p style='text-align:center;'><img src='" . $logoImg . "' alt='Logo' style='max-height:80px;'></p>" : '';
-    // El cuerpo HTML recibe un pequeño envoltorio para asegurar que se vea bien en clientes de correo
+    
     $htmlBody = "
     <!DOCTYPE html>
     <html lang='es'>
@@ -110,18 +164,11 @@ try {
 
     if (!empty($data['pdfBase64']) && !empty($data['pdfName'])) {
         $raw = $data['pdfBase64'];
-        $prefix = substr($raw, 0, 80);
-
-        // Strip any data URI prefix (handles various jsPDF formats)
         $b64 = preg_replace('#^data:application/pdf(;[^,]+)?;base64,#i', '', $raw);
-
         $pdfData = @base64_decode($b64, true);
-        if ($pdfData === false) {
-            echo json_encode(['error' => 'base64_decode falló', 'prefix' => $prefix]);
-            exit;
+        if ($pdfData !== false) {
+            $mail->addStringAttachment($pdfData, $data['pdfName'], 'base64', 'application/pdf');
         }
-
-        $mail->addStringAttachment($pdfData, $data['pdfName'], 'base64', 'application/pdf');
     }
 
     $mail->send();
@@ -129,3 +176,4 @@ try {
 } catch (Exception $e) {
     echo json_encode(['error' => $e->getMessage()]);
 }
+?>

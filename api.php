@@ -4,11 +4,24 @@
 // ============================================================
 header('Content-Type: application/json; charset=utf-8');
 header('Cache-Control: no-cache, must-revalidate');
-header('Access-Control-Allow-Origin: *');
 header('Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS');
 header('Access-Control-Allow-Headers: Content-Type');
+header('Access-Control-Allow-Credentials: true');
 header('X-Frame-Options: DENY');
 header('X-Content-Type-Options: nosniff');
+
+// CORS: permitir mismo origen y APP_URL configurado en Vercel
+$origin      = $_SERVER['HTTP_ORIGIN'] ?? '';
+$appUrl      = getenv('APP_URL') ?: '';
+$localOrigins = ['http://localhost', 'http://localhost:8000', 'http://127.0.0.1'];
+if ($origin && ($origin === $appUrl || in_array($origin, $localOrigins))) {
+    header("Access-Control-Allow-Origin: $origin");
+} elseif (!$origin) {
+    header('Access-Control-Allow-Origin: *');
+} else {
+    header('Access-Control-Allow-Origin: ' . ($appUrl ?: $origin));
+}
+
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') { http_response_code(200); exit; }
 
 // --- Conexión ---
@@ -27,9 +40,6 @@ if (file_exists(__DIR__ . '/db_config.php')) {
     define('DB_DIVISA',  'MXN');
     define('DB_SERIE',   'A');
 }
-
-// --- Sesión ---
-session_start();
 
 $resource = $_GET['resource'] ?? '';
 $id       = $_GET['id'] ?? null;
@@ -58,19 +68,66 @@ try {
     die(json_encode(['error' => 'Error de conexión: ' . $e->getMessage()]));
 }
 
+// ============================================================
+// SESIÓN POR TOKEN — compatible con Vercel serverless
+// Reemplaza $_SESSION (que no persiste entre instancias serverless)
+// ============================================================
+define('TOKEN_COOKIE', 'SUNCATCHER_TOKEN');
+define('TOKEN_EXPIRY', 86400 * 7); // 7 días
+
+function tokenGet($pdo) {
+    $token = $_COOKIE[TOKEN_COOKIE] ?? '';
+    if (!$token || strlen($token) < 32) return null;
+    $stmt = $pdo->prepare("SELECT username FROM sessions WHERE token = ? AND expires_at > NOW()");
+    $stmt->execute([$token]);
+    return $stmt->fetch() ?: null;
+}
+
+function tokenCreate($pdo, $username) {
+    $token   = bin2hex(random_bytes(32));
+    $expires = date('Y-m-d H:i:s', time() + TOKEN_EXPIRY);
+    // Limpiar sesiones expiradas del usuario
+    $pdo->prepare("DELETE FROM sessions WHERE username = ? AND expires_at < NOW()")->execute([$username]);
+    $pdo->prepare("INSERT INTO sessions (token, username, expires_at) VALUES (?, ?, ?)")
+        ->execute([$token, $username, $expires]);
+    // secure=true en HTTPS (Vercel siempre es HTTPS), false en local
+    $secure = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off')
+           || (isset($_SERVER['HTTP_X_FORWARDED_PROTO']) && $_SERVER['HTTP_X_FORWARDED_PROTO'] === 'https');
+    setcookie(TOKEN_COOKIE, $token, [
+        'expires'  => time() + TOKEN_EXPIRY,
+        'path'     => '/',
+        'httponly' => true,
+        'samesite' => 'Lax',
+        'secure'   => $secure,
+    ]);
+}
+
+function tokenDestroy($pdo) {
+    $token = $_COOKIE[TOKEN_COOKIE] ?? '';
+    if ($token) $pdo->prepare("DELETE FROM sessions WHERE token = ?")->execute([$token]);
+    setcookie(TOKEN_COOKIE, '', ['expires' => time() - 3600, 'path' => '/']);
+}
+
+// Lee la configuración de la tabla `configuracion` en BD
+function getDbSettings($pdo) {
+    try {
+        $row = $pdo->query("SELECT valor FROM configuracion WHERE clave = 'app_settings'")->fetch();
+        return $row ? (json_decode($row['valor'], true) ?: []) : [];
+    } catch (\Exception $e) { return []; }
+}
+
 // ---- Endpoint de Login (sin autenticación previa) ----
 if ($resource === 'login') {
     if ($method === 'POST') {
         $user = trim($body['username'] ?? '');
         $pass = $body['password'] ?? '';
-        
+
         $stmt = $pdo->prepare("SELECT usuario AS nick, contrasena AS password FROM usuarios WHERE usuario = ?");
         $stmt->execute([$user]);
         $userData = $stmt->fetch();
 
         if ($userData && password_verify($pass, $userData['password'])) {
-            $_SESSION['logged_in'] = true;
-            $_SESSION['username']  = $userData['nick'];
+            tokenCreate($pdo, $userData['nick']);
             respond(['success' => true, 'username' => $userData['nick']]);
         } else {
             err('Usuario o contraseña incorrectos', 401);
@@ -81,12 +138,24 @@ if ($resource === 'login') {
 
 // ---- Endpoint de Logout ----
 if ($resource === 'logout') {
-    session_destroy();
+    tokenDestroy($pdo);
     respond(['success' => true]);
 }
 
+// ---- Settings GET público (lectura sin auth, nunca expone contraseñas) ----
+// Necesario para cargar logo/empresa en la pantalla de login antes de autenticarse
+if ($resource === 'settings' && $method === 'GET') {
+    $settings = getDbSettings($pdo);
+    // Nunca exponer contraseña SMTP al cliente
+    if (isset($settings['smtp']['pass']))     $settings['smtp']['pass']     = '';
+    if (isset($settings['smtp']['password'])) $settings['smtp']['password'] = '';
+    respond($settings);
+}
+
 // ---- Verificar sesión para el resto de recursos ----
-if (empty($_SESSION['logged_in'])) {
+$currentSession = tokenGet($pdo);
+
+if (!$currentSession) {
     if ($resource !== 'check_session') {
         err('No autorizado. Por favor inicia sesión.', 401);
     }
@@ -94,40 +163,43 @@ if (empty($_SESSION['logged_in'])) {
 
 // ---- check_session: responde OK solo si hay sesión activa ----
 if ($resource === 'check_session') {
-    if (!empty($_SESSION['logged_in'])) {
-        respond(['logged_in' => true, 'username' => $_SESSION['username'] ?? 'admin']);
+    if ($currentSession) {
+        respond(['logged_in' => true, 'username' => $currentSession['username']]);
     }
     err('No autorizado', 401);
 }
 
+$currentUsername = $currentSession['username'] ?? 'admin';
+
 switch ($resource) {
     case 'settings':
-        if ($method === 'GET') {
-            $settingsFile = 'settings.json';
-            if (file_exists($settingsFile)) respond(json_decode(file_get_contents($settingsFile), true));
-            else respond([]);
-        }
         if ($method === 'POST' || $method === 'PUT') {
-            $written = file_put_contents('settings.json', json_encode($body, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
-            if ($written === false) {
-                err('No se pudo guardar la configuración. Verifica permisos.', 500);
+            // Preservar contraseña SMTP si no se envía nueva desde el frontend
+            if (empty($body['smtp']['pass']) && empty($body['smtp']['password'])) {
+                $existing = getDbSettings($pdo);
+                $body['smtp']['pass'] = $existing['smtp']['pass'] ?? '';
             }
+            $json = json_encode($body, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
+            $pdo->prepare("
+                INSERT INTO configuracion (clave, valor) VALUES ('app_settings', ?)
+                ON CONFLICT (clave) DO UPDATE SET valor = EXCLUDED.valor, updated_at = NOW()
+            ")->execute([$json]);
             respond(['success' => true]);
         }
         break;
-    case 'clients':   handleClients($pdo, $method, $id, $body);   break;
-    case 'products':  handleProducts($pdo, $method, $id, $body);  break;
-    case 'budgets':   handleBudgets($pdo, $method, $id, $body);   break;
-    case 'families':  handleFamilies($pdo);                       break;
-    case 'unidades':  handleUnidades($pdo, $method, $id, $body);                       break;
-    case 'dashboard-stats': handleDashboardStats($pdo); break;
+
+    case 'clients':         handleClients($pdo, $method, $id, $body);                    break;
+    case 'products':        handleProducts($pdo, $method, $id, $body);                   break;
+    case 'budgets':         handleBudgets($pdo, $method, $id, $body, $currentUsername);  break;
+    case 'families':        handleFamilies($pdo);                                         break;
+    case 'unidades':        handleUnidades($pdo, $method, $id, $body);                   break;
+    case 'dashboard-stats': handleDashboardStats($pdo);                                   break;
     default: err('Recurso no encontrado', 404);
 }
 
 // =============================================
 // UNIDADES
 // =============================================
-
 function handleUnidades($pdo, $method, $id = null, $body = null) {
     if ($method === 'GET') {
         if ($id !== null && $id !== '') {
@@ -278,42 +350,40 @@ function handleProducts($pdo, $method, $id, $body) {
     }
 
     if ($method === 'PUT' && $id !== null && $id !== '') {
-        $taxCode = getTaxCode($pdo, $body['tax'] ?? 16);
-        $price   = floatval($body['price'] ?? 0);
-        $cost    = floatval($body['cost'] ?? 0);
-        $margin  = floatval($body['margin'] ?? 30);
-        $tax     = floatval($body['tax'] ?? 16);
-        $idunidad= intval($body['idunidad'] ?? 1);
-        $code    = $body['code'] ?? '';
-        $name    = $body['name'] ?? '';
+        $taxCode  = getTaxCode($pdo, $body['tax'] ?? 16);
+        $price    = floatval($body['price'] ?? 0);
+        $cost     = floatval($body['cost'] ?? 0);
+        $margin   = floatval($body['margin'] ?? 30);
+        $tax      = floatval($body['tax'] ?? 16);
+        $idunidad = intval($body['idunidad'] ?? 1);
+        $code     = $body['code'] ?? '';
+        $name     = $body['name'] ?? '';
 
         $stmtOld = $pdo->prepare("SELECT referencia FROM productos WHERE idproducto = ?");
         $stmtOld->execute([$id]);
         $oldProduct = $stmtOld->fetch();
         $oldCode = $oldProduct ? $oldProduct['referencia'] : '';
-        
-        file_put_contents('debug.txt', date('Y-m-d H:i:s') . " - Updating ID $id. Old code: $oldCode. New Price: $price. Cost: $cost. Margin: $margin\n", FILE_APPEND);
 
         $pdo->prepare("UPDATE productos SET referencia=?, descripcion=?, precio=?, codfamilia=?, codimpuesto=?, costo=?, margen=?, iva=?, idunidad=?, observaciones=? WHERE idproducto=?")
             ->execute([$code, $name, $price, $body['codfamilia']??'1', $taxCode, $cost, $margin, $tax, $idunidad, $body['observaciones']??'', $id]);
 
         if ($oldCode !== '') {
-            // Actualizar líneas de presupuesto
+            // Actualizar líneas de presupuesto que usen este producto
             $pdo->prepare("
-                UPDATE presupuestos_lineas 
+                UPDATE presupuestos_lineas
                 SET codigo_producto = ?, producto = ?, precio_unitario = ?, iva_pct = ?, idunidad = ?,
                     total_linea = (cantidad * ?) * (1 + ? / 100)
                 WHERE codigo_producto = ?
             ")->execute([$code, $name, $price, $tax, $idunidad, $price, $tax, $oldCode]);
 
-            // Recalcular presupuestos afectados
+            // Recalcular totales de presupuestos afectados
             $stmtAff = $pdo->prepare("SELECT DISTINCT idpresupuesto FROM presupuestos_lineas WHERE codigo_producto = ?");
             $stmtAff->execute([$code]);
             $affectedBudgets = $stmtAff->fetchAll(PDO::FETCH_COLUMN);
 
             foreach ($affectedBudgets as $bid) {
                 $stmtTot = $pdo->prepare("
-                    SELECT COALESCE(SUM(cantidad * precio_unitario), 0) as neto, 
+                    SELECT COALESCE(SUM(cantidad * precio_unitario), 0) as neto,
                            COALESCE(SUM(cantidad * precio_unitario * (iva_pct / 100)), 0) as iva,
                            COALESCE(SUM((cantidad * precio_unitario) * (1 + iva_pct / 100)), 0) as total
                     FROM presupuestos_lineas WHERE idpresupuesto = ?
@@ -345,32 +415,30 @@ function getTaxCode($pdo, $rate) {
     return $map[intval($rate)] ?? '003';
 }
 
-
-// New function for dashboard stats
+// =============================================
+// DASHBOARD STATS
+// =============================================
 function handleDashboardStats($pdo) {
-    // Total sales
     $stmt = $pdo->query("SELECT COALESCE(SUM(total),0) as totalSales FROM presupuestos");
     $totalSales = $stmt->fetchColumn();
 
-    // Monthly totals for last 6 months
     $monthLabels = [];
     $monthTotals = [];
     for ($i = 5; $i >= 0; $i--) {
         $date = new DateTime();
         $date->modify("-{$i} month");
         $label = $date->format('M y');
-        $year = $date->format('Y');
+        $year  = $date->format('Y');
         $month = $date->format('m');
-        $stmt = $pdo->prepare("SELECT COALESCE(SUM(total),0) as sum FROM presupuestos WHERE fecha >= ? AND fecha < ?");
+        $stmt  = $pdo->prepare("SELECT COALESCE(SUM(total),0) as sum FROM presupuestos WHERE fecha >= ? AND fecha < ?");
         $stmt->execute(["$year-$month-01", date('Y-m-d', strtotime("$year-$month-01 +1 month"))]);
         $sum = $stmt->fetchColumn();
         $monthLabels[] = $label;
         $monthTotals[] = floatval($sum);
     }
 
-    // Status counts
     $stmt = $pdo->query("SELECT COALESCE(estado,'Pendiente') as status, COUNT(*) as cnt FROM presupuestos GROUP BY status");
-    $statusRows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    $statusRows   = $stmt->fetchAll(PDO::FETCH_ASSOC);
     $statusCounts = [];
     foreach ($statusRows as $row) {
         $statusCounts[$row['status']] = (int)$row['cnt'];
@@ -387,7 +455,7 @@ function handleDashboardStats($pdo) {
 // =============================================
 // PRESUPUESTOS
 // =============================================
-function handleBudgets($pdo, $method, $id, $body) {
+function handleBudgets($pdo, $method, $id, $body, $currentUsername = 'admin') {
     if ($method === 'GET') {
         if ($id !== null && $id !== '') {
             $s = $pdo->prepare("
@@ -415,7 +483,7 @@ function handleBudgets($pdo, $method, $id, $body) {
                        l.cantidad as qty, l.precio_unitario as price, l.iva_pct as tax, l.idunidad as idunidad,
                        l.total_linea as lineTotal,
                        (SELECT p2.idproducto FROM productos p2 WHERE p2.referencia = l.codigo_producto LIMIT 1) as productId
-                FROM presupuestos_lineas l 
+                FROM presupuestos_lineas l
                 WHERE l.idpresupuesto = ? ORDER BY l.idlinea
             ");
             $sl->execute([$id]);
@@ -447,8 +515,6 @@ function handleBudgets($pdo, $method, $id, $body) {
         $client = $cs->fetch();
         if (!$client) err('Cliente no encontrado');
 
-        $username = $_SESSION['username'] ?? 'admin';
-
         // Siguiente número
         $ns = $pdo->prepare("SELECT MAX(numero) as m FROM presupuestos WHERE codejercicio=? AND codserie=?");
         $ns->execute([$year, $serie]);
@@ -468,8 +534,8 @@ function handleBudgets($pdo, $method, $id, $body) {
         $budgetId = intval($pdo->query("SELECT COALESCE(MAX(idpresupuesto), 0) + 1 FROM presupuestos")->fetchColumn());
         $pdo->prepare("
             INSERT INTO presupuestos
-              (idpresupuesto, codigo, codcliente, cliente, rfc_cliente, email_cliente, telefono_cliente, 
-               fecha, codserie, codejercicio, numero, estado, neto, iva, total, 
+              (idpresupuesto, codigo, codcliente, cliente, rfc_cliente, email_cliente, telefono_cliente,
+               fecha, codserie, codejercicio, numero, estado, neto, iva, total,
                forma_pago, divisa, usuario, observaciones, editable)
             VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,1)
         ")->execute([
@@ -477,10 +543,10 @@ function handleBudgets($pdo, $method, $id, $body) {
             $date, $serie, $year, $nextNum, 'Abierto',
             $neto, $totalIva, $total,
             $client['forma_pago'], DB_DIVISA,
-            $username, $body['observaciones'] ?? ''
+            $currentUsername, $body['observaciones'] ?? ''
         ]);
 
-        // Insertar líneas (con número de línea secuencial para respetar orden)
+        // Insertar líneas
         $lineNum = 1;
         foreach ($body['items'] as $item) {
             $sub     = floatval($item['price']) * floatval($item['qty']);
@@ -524,7 +590,7 @@ function handleBudgets($pdo, $method, $id, $body) {
 
         // Actualización completa del presupuesto (edición)
         if (!empty($body['items'])) {
-            $date  = $body['date'] ?? date('Y-m-d');
+            $date = $body['date'] ?? date('Y-m-d');
 
             // Recalcular totales
             $neto = 0; $totalIva = 0;

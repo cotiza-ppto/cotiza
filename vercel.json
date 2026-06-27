@@ -6,9 +6,12 @@
     }
   ],
   "routes": [
-    { "src": "/settings.json", "status": 403 },
-    { "src": "/debug.txt", "status": 403 },
-    { "src": "/error_log", "status": 403 },
-    { "src": "/(.*)", "dest": "/$1" }
+    { "src": "/db_config.php",  "status": 403 },
+    { "src": "/settings.json",  "status": 403 },
+    { "src": "/debug.txt",      "status": 403 },
+    { "src": "/error_log",      "status": 403 },
+    { "src": "/split_js.php",   "status": 403 },
+    { "src": "/libs/(.*)",      "status": 403 },
+    { "src": "/(.*)",           "dest": "/$1" }
   ]
 }
