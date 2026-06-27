@@ -4,18 +4,17 @@
       "source": "/(.*)",
       "headers": [
         { "key": "X-Frame-Options", "value": "DENY" },
-        { "key": "X-Content-Type-Options", "value": "nosniff" }
+        { "key": "X-Content-Type-Options", "value": "nosniff" },
+        { "key": "Cache-Control", "value": "no-cache, must-revalidate" }
       ]
     }
   ],
-  "routes": [
-    { "src": "/error_log",   "status": 403 },
-    { "src": "/uploads/(.*)", "status": 403 },
-    { "src": "/api.php",     "dest": "/api/api.js" },
-    { "src": "/email.php",   "dest": "/api/email.js" },
-    { "src": "/upload.php",  "dest": "/api/upload.js" },
-    { "src": "/index.php",   "dest": "/index.html" },
-    { "src": "/(.*)",        "dest": "/$1" }
-  ]
+  "rewrites": [
+    { "source": "/api.php",    "destination": "/api/api.js" },
+    { "source": "/email.php",  "destination": "/api/email.js" },
+    { "source": "/upload.php", "destination": "/api/upload.js" },
+    { "source": "/index.php",  "destination": "/index.html" }
+  ],
+  "redirects": [],
+  "trailingSlash": false
 }
-
