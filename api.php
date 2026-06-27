@@ -30,7 +30,11 @@ if (file_exists(__DIR__ . '/db_config.php')) {
     include_once __DIR__ . '/db_config.php';
 } else {
     // Vercel/Producción: credenciales desde variables de entorno
-    define('DB_HOST',    getenv('DB_HOST')    ?: 'db.ewrhzalwcnzclhjortfp.supabase.co');
+    $host = getenv('DB_HOST') ?: 'db.ewrhzalwcnzclhjortfp.supabase.co';
+    if ($host === 'db.ewrhzalwcnzclhjortfp.sup') {
+        $host = 'db.ewrhzalwcnzclhjortfp.supabase.co';
+    }
+    define('DB_HOST',    $host);
     define('DB_PORT',    getenv('DB_PORT')    ?: '5432');
     define('DB_NAME',    getenv('DB_NAME')    ?: 'postgres');
     define('DB_USER',    getenv('DB_USER')    ?: 'postgres');
