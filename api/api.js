@@ -426,7 +426,7 @@ export default async function handler(req, res) {
             SELECT p.idpresupuesto as id, p.codigo, p.codcliente as "clientId",
                    COALESCE(p.fecha::text,'') as date, COALESCE(p.neto,0) as neto, COALESCE(p.iva,0) as "totaliva", COALESCE(p.total,0) as total,
                    COALESCE(p.estado,'Abierto') as status,
-                   COALESCE(NULLIF(p.cliente,''), c.nombre, p.codcliente, '') as "clientName"
+                   COALESCE(NULLIF(p.cliente,''), c.nombre, p.codcliente::text, '') as "clientName"
             FROM presupuestos p
             LEFT JOIN clientes c ON c.codcliente = p.codcliente
             ORDER BY p.fecha DESC, p.idpresupuesto DESC LIMIT 1000
