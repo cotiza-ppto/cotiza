@@ -399,7 +399,7 @@ Object.assign(window.app, {
                 }).join('');
 
                 pagesHtml += `
-                <div class="page-sheet bg-white flex flex-col justify-between" style="font-family: Arial, sans-serif; height: 960px; overflow: hidden; box-sizing: border-box;">
+                <div class="page-sheet bg-white flex flex-col justify-between" style="font-family: Arial, sans-serif; height: 1056px; padding: 48px; overflow: hidden; box-sizing: border-box;">
                     <div class="flex-grow flex flex-col justify-start">
                         ${isFirst ? `
                         <!-- Logo and Company Header -->
@@ -534,7 +534,7 @@ Object.assign(window.app, {
         if (element.parentElement) element.parentElement.scrollTop = 0;
         
         const opt = {
-            margin:      0.5,
+            margin:      0,
             filename:    `${filename}.pdf`,
             image:       { type: 'jpeg', quality: 0.98 },
             html2canvas: { scale: 2, useCORS: true, scrollY: 0 },
@@ -560,7 +560,7 @@ Object.assign(window.app, {
         try {
             if (originalElement.parentElement) originalElement.parentElement.scrollTop = 0;
             const opt = {
-                margin:      0.5,
+                margin:      0,
                 filename:    `${codigo}.pdf`,
                 image:       { type: 'jpeg', quality: 0.98 },
                 html2canvas: { scale: 2, useCORS: true, scrollY: 0 },
@@ -765,7 +765,7 @@ Object.assign(window.app, {
                 }).join('');
 
                 pagesHtml += `
-                <div class="page-sheet bg-white flex flex-col justify-between" style="font-family: Arial, sans-serif; height: 960px; overflow: hidden; box-sizing: border-box;">
+                <div class="page-sheet bg-white flex flex-col justify-between" style="font-family: Arial, sans-serif; height: 1056px; padding: 48px; overflow: hidden; box-sizing: border-box;">
                     <div class="flex-grow flex flex-col justify-start">
                         ${isFirst ? `
                         <!-- Logo and Company Header -->
