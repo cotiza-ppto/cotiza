@@ -357,7 +357,7 @@ export default async function handler(req, res) {
             await pool.query(`
               UPDATE presupuestos_lineas
               SET codigo_producto = $1, producto = $2, precio_unitario = $3, iva_pct = $4, idunidad = $5,
-                  total_linea = (cantidad * $6) * (1 + $7 / 100)
+                  total_linea = (cantidad * $6) * (1 + $7 / 100.0)
               WHERE codigo_producto = $8
             `, [code, name, price, tax, idunidad, price, tax, oldCode]);
 
@@ -366,8 +366,8 @@ export default async function handler(req, res) {
               const bid = row.idpresupuesto;
               const totsRow = await pool.query(`
                 SELECT COALESCE(SUM(cantidad * precio_unitario), 0) as neto,
-                       COALESCE(SUM(cantidad * precio_unitario * (iva_pct / 100)), 0) as iva,
-                       COALESCE(SUM((cantidad * precio_unitario) * (1 + iva_pct / 100)), 0) as total
+                       COALESCE(SUM(cantidad * precio_unitario * (iva_pct / 100.0)), 0) as iva,
+                       COALESCE(SUM((cantidad * precio_unitario) * (1 + iva_pct / 100.0)), 0) as total
                 FROM presupuestos_lineas WHERE idpresupuesto = $1
               `, [bid]);
               const tots = totsRow.rows[0];
