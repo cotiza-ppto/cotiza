@@ -396,7 +396,7 @@ export default async function handler(req, res) {
                      COALESCE(p.fecha::text,'') as date, COALESCE(p.neto,0) as neto, COALESCE(p.iva,0) as totaliva, COALESCE(p.total,0) as total,
                      COALESCE(p.observaciones,'') as observaciones,
                      COALESCE(p.estado,'Abierto') as status,
-                     COALESCE(p.cliente,'') as clientName,
+                     COALESCE(NULLIF(p.cliente,''), c.nombre, p.codcliente::text, '') as clientName,
                      COALESCE(p.rfc_cliente,'')        as clientRfc,
                      COALESCE(p.email_cliente,'')          as clientEmail,
                      COALESCE(p.telefono_cliente,'')      as clientPhone,
@@ -411,10 +411,10 @@ export default async function handler(req, res) {
             if (!budget) return err(res, 'Presupuesto no encontrado', 404);
 
             const itemsResult = await pool.query(`
-              SELECT l.idlinea as id, l.codigo_producto as productCode, l.producto as productName,
+              SELECT l.idlinea as id, l.codigo_producto as "productCode", l.producto as "productName",
                      l.cantidad as qty, l.precio_unitario as price, l.iva_pct as tax, l.idunidad as idunidad,
-                     l.total_linea as lineTotal,
-                     (SELECT p2.idproducto FROM productos p2 WHERE p2.referencia = l.codigo_producto LIMIT 1) as productId
+                     l.total_linea as "lineTotal",
+                     (SELECT p2.idproducto FROM productos p2 WHERE p2.referencia = l.codigo_producto LIMIT 1) as "productId"
               FROM presupuestos_lineas l
               WHERE l.idpresupuesto = $1 ORDER BY l.idlinea
             `, [id]);
