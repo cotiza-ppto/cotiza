@@ -1023,7 +1023,7 @@ const app = {
             //   Last extra:  totals-block(100) + Total Artículos(20) + observations(45) = 165
             //   Other pages: simple-header(38) + thead(38) + footer(44) = 120
             const rowPx = 24;
-            const AVAIL         = 880;
+            const AVAIL         = 960;
             const OH_FIRST      = 300;
             const OH_LAST_EXTRA = 165;
             const OH_OTHER      = 120;
@@ -1416,7 +1416,7 @@ const app = {
             // Se fuerza rowPx a 24 (py-1) para que quepan exactamente 25 líneas en carta
             // Last extra: Total Artículos(20) + firma(140) = 160
             const rowPx = 24;
-            const AVAIL         = 880;
+            const AVAIL         = 960;
             const OH_FIRST      = 300;
             const OH_LAST_EXTRA = 160;
             const OH_OTHER      = 120;
