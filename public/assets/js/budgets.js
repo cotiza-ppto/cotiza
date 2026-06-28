@@ -330,7 +330,7 @@ Object.assign(window.app, {
             const OH_FIRST      = 300;
             const OH_LAST_EXTRA = 165;
             const OH_OTHER      = 120;
-            const MAX_LINES     = 25;
+            const MAX_LINES     = 40;
             const CAP_SINGLE = Math.min(MAX_LINES, Math.max(3, Math.floor((AVAIL - OH_FIRST - OH_LAST_EXTRA) / rowPx)));
             const CAP_FIRST  = Math.min(MAX_LINES, Math.max(3, Math.floor((AVAIL - OH_FIRST)                 / rowPx)));
             const CAP_LAST   = Math.min(MAX_LINES, Math.max(3, Math.floor((AVAIL - OH_OTHER - OH_LAST_EXTRA) / rowPx)));
@@ -723,7 +723,7 @@ Object.assign(window.app, {
             const OH_FIRST      = 300;
             const OH_LAST_EXTRA = 160;
             const OH_OTHER      = 120;
-            const MAX_LINES     = 25;
+            const MAX_LINES     = 40;
             const CAP_SINGLE = Math.min(MAX_LINES, Math.max(3, Math.floor((AVAIL - OH_FIRST - OH_LAST_EXTRA) / rowPx)));
             const CAP_FIRST  = Math.min(MAX_LINES, Math.max(3, Math.floor((AVAIL - OH_FIRST)                 / rowPx)));
             const CAP_LAST   = Math.min(MAX_LINES, Math.max(3, Math.floor((AVAIL - OH_OTHER - OH_LAST_EXTRA) / rowPx)));
