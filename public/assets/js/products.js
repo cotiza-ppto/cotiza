@@ -88,8 +88,9 @@ renderProducts() {
 
     calculatePriceFromMargin() {
         const cost   = parseFloat(document.getElementById('prod-cost')?.value) || 0;
-        const margin = parseFloat(document.getElementById('prod-margin')?.value) || 0;
-        const price  = cost * (1 + margin / 100);
+        let margin = parseFloat(document.getElementById('prod-margin')?.value) || 0;
+        if (margin >= 100) margin = 99.99;
+        const price  = cost / (1 - margin / 100);
         const disp   = document.getElementById('prod-price-display');
         if (disp) { disp.innerText = this.formatCurrency(price); disp.dataset.value = price; }
     },
@@ -124,10 +125,10 @@ renderProducts() {
     getProductPayload(e) {
         const f = new FormData(e.target);
         const cost   = parseFloat(f.get('cost'))   || 0;
-        const margin = parseFloat(f.get('margin'))  || 0;
-        // Siempre recalcular el precio desde costo+margen para evitar
-        // que el data-value del div quede desactualizado
-        const price  = cost * (1 + margin / 100);
+        let margin = parseFloat(f.get('margin'))  || 0;
+        if (margin >= 100) margin = 99.99;
+        // Siempre recalcular el precio desde costo y margen (utilidad sobre venta)
+        const price  = cost / (1 - margin / 100);
         return {
             code:          f.get('code'),
             name:          f.get('name'),
