@@ -396,13 +396,13 @@ export default async function handler(req, res) {
                      COALESCE(p.fecha::text,'') as date, COALESCE(p.neto,0) as neto, COALESCE(p.iva,0) as totaliva, COALESCE(p.total,0) as total,
                      COALESCE(p.observaciones,'') as observaciones,
                      COALESCE(p.estado,'Abierto') as status,
-                     COALESCE(NULLIF(p.cliente,''), c.nombre, p.codcliente::text, '') as clientName,
-                     COALESCE(p.rfc_cliente,'')        as clientRfc,
-                     COALESCE(p.email_cliente,'')          as clientEmail,
-                     COALESCE(p.telefono_cliente,'')      as clientPhone,
-                     COALESCE(c.direccion,'')     as clientStreet,
-                     COALESCE(c.ciudad,'')        as clientCity,
-                     COALESCE(c.codpostal,'')     as clientZip
+                     COALESCE(NULLIF(p.cliente,''), c.nombre, p.codcliente::text, '') as "clientName",
+                     COALESCE(p.rfc_cliente,'')        as "clientRfc",
+                     COALESCE(p.email_cliente,'')          as "clientEmail",
+                     COALESCE(p.telefono_cliente,'')      as "clientPhone",
+                     COALESCE(c.direccion,'')     as "clientStreet",
+                     COALESCE(c.ciudad,'')        as "clientCity",
+                     COALESCE(c.codpostal,'')     as "clientZip"
               FROM presupuestos p
               LEFT JOIN clientes c ON c.codcliente  = p.codcliente
               WHERE p.idpresupuesto = $1
