@@ -96,7 +96,7 @@ Object.assign(window.app, {
         const qtyVal = existingItem ? parseFloat(existingItem.qty) : 1;
         const e = existingItem;
         const displayPrice = e ? this.formatCurrency(e.qty * e.price) : '$0.00';
-        const searchVal = e ? (cache.products.find(p => p.id == e.productId)?.name || '') : '';
+        const searchVal = e ? (e.productName || cache.products.find(p => p.id == e.productId)?.name || '') : '';
         container.insertAdjacentHTML('beforeend', `
             <div class="flex gap-2 items-center budget-row" id="row-${rid}"
                 data-productid="${e ? e.productId : ''}"
