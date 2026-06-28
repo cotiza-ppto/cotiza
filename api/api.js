@@ -438,7 +438,7 @@ export default async function handler(req, res) {
           if (!body.clientId) return err(res, 'Cliente requerido');
           if (!body.items || body.items.length === 0) return err(res, 'Se requiere al menos un producto');
 
-          const date = body.date || new Date().toISOString().split('T')[0];
+          const date = body.date || new Date().toLocaleString('en-CA', {timeZone: 'America/Tijuana', year: 'numeric', month: '2-digit', day: '2-digit'});
           const year = date.substring(0, 4);
           const serie = 'A';
 
@@ -513,7 +513,7 @@ export default async function handler(req, res) {
           }
 
           if (body.items && body.items.length > 0) {
-            const date = body.date || new Date().toISOString().split('T')[0];
+            const date = body.date || new Date().toLocaleString('en-CA', {timeZone: 'America/Tijuana', year: 'numeric', month: '2-digit', day: '2-digit'});
 
             let neto = 0;
             let totalIva = 0;
