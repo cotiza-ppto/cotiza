@@ -97,6 +97,10 @@ export default async function handler(req, res) {
 
     const isSecure = smtpDefaults.secure === 'ssl' || smtpDefaults.port === 465;
 
+    if (!smtpDefaults.host) {
+      return err(res, 'Configuración SMTP incompleta. Por favor configure el servidor de correo en Ajustes.', 400);
+    }
+
     const transporter = nodemailer.createTransport({
       host: smtpDefaults.host,
       port: smtpDefaults.port,

@@ -685,6 +685,7 @@ Object.assign(window.app, {
             try {
                 const res = await fetch('api/email', {
                     method: 'POST',
+                    credentials: 'same-origin',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ to, bcc, subject, html: fullHtml, pdfBase64, pdfName: `${codigo}.pdf` })
                 });
